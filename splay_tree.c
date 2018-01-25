@@ -4,12 +4,12 @@
 #include <stdio.h>
 
 //cria um novo no e caso seja alocado a medoria
-// inicializa os valores e devolve o novo no 
+// inicializa os valores e devolve o novo no
 S_TREE * criar_no(int chave)
 {
    S_TREE *novoNo = (S_TREE *) malloc(sizeof(S_TREE));
    if(!novoNo) return NULL;
-   
+
    novoNo->chave = chave;
    novoNo->dir = novoNo->esq = NULL;
    return novoNo;
@@ -18,20 +18,20 @@ S_TREE * criar_no(int chave)
 S_TREE * splay_BU(S_TREE **raiz, int chave)
 {
    assert(raiz);
-   
+
    //casos base: raiz nula ou chave está na raiz
    if(!(*raiz))
    {
       return *raiz;
    }
    if((*raiz)->chave == chave) return *raiz;
-   
+
    //busca por elemento chave a esquerda
    if(chave < (*raiz)->chave)
    {
       //chave não está na árvore, retorna-se a raiz
       if((*raiz)->esq == NULL) return *raiz;
-      
+
       //realiza rotação zig-zig direita
       if(chave < (*raiz)->esq->chave)
       {
@@ -42,7 +42,7 @@ S_TREE * splay_BU(S_TREE **raiz, int chave)
       }
       else
 
-      //rotação zig-zag esquerda/direita   
+      //rotação zig-zag esquerda/direita
       if(chave > (*raiz)->esq->chave)
       {
          splay_BU(&((*raiz)->esq->dir), chave);
@@ -50,10 +50,10 @@ S_TREE * splay_BU(S_TREE **raiz, int chave)
          //primeiro rotacionamos uma vez a esquerda
          if((*raiz)->esq->dir != NULL) rotacionar_esq(&((*raiz)->esq));
       }
-      
+
       //segunda rotação para direita
       if((*raiz)->esq != NULL) rotacionar_dir(raiz);
-      
+
       return *raiz;
    }
    else
@@ -61,12 +61,12 @@ S_TREE * splay_BU(S_TREE **raiz, int chave)
    {
       //chave não está na árvore, retorna-se a raiz
       if((*raiz)->dir == NULL) return *raiz;
-      
+
       //rotação zig-zag a esquerda/direita
       if(chave < (*raiz)->dir->chave)
       {
          splay_BU(&((*raiz)->dir->esq), chave);
-         
+
          //primeiro rotacionamos uma vez a direita
          if((*raiz)->dir->esq != NULL) rotacionar_dir(&((*raiz)->dir));
       }
@@ -78,13 +78,98 @@ S_TREE * splay_BU(S_TREE **raiz, int chave)
          splay_BU(&((*raiz)->dir->dir), chave);
          rotacionar_esq(raiz);
       }
-      
+
       //então, realizamos segunda rotação para esquerda
       if((*raiz)->dir != NULL) rotacionar_esq(raiz);
-      
+
       return *raiz;
    }
 
+}
+
+S_TREE *splay_TD(S_TREE **raiz, int chave)
+{
+   assert(raiz);
+
+   if(!(*raiz))
+   {
+      return *raiz;
+   }
+
+   if(chave < (*raiz)->chave)
+   {
+      if((*raiz)->esq == NULL)
+         return *raiz;
+
+      if(chave < (*raiz)->esq->chave)
+      {
+
+         if((*raiz)->esq->esq)
+         {
+            rotacionar_dir(&((*raiz)->esq));
+         }
+         else
+         {
+            rotacionar_dir(raiz);
+            return *raiz;
+         }
+      }
+      else if(chave > (*raiz)->esq->chave)
+      {
+         if((*raiz)->esq->dir)
+         {
+            rotacionar_esq(&((*raiz)->esq));
+         }
+         else
+         {
+            rotacionar_dir(raiz);
+            return *raiz;
+         }
+      }
+      else
+      {
+        rotacionar_dir(raiz);
+      }
+
+      splay_TD(raiz, chave);
+   }
+   else if(chave > (*raiz)->chave)
+   {
+      if((*raiz)->dir == NULL)
+         return *raiz;
+
+      if(chave > (*raiz)->dir->chave)
+      {
+         if((*raiz)->dir->dir)
+         {
+            rotacionar_esq(&((*raiz)->dir));
+         }
+         else
+         {
+            rotacionar_esq(raiz);
+            return *raiz;
+         }
+      }
+      else if(chave < (*raiz)->dir->chave)
+      {
+         if((*raiz)->dir->esq)
+         {
+            rotacionar_dir(&((*raiz)->dir));
+         }
+         else
+         {
+            rotacionar_esq(raiz);
+            return *raiz;
+         }
+      }
+      else
+      {
+        rotacionar_esq(raiz);
+      }
+
+      splay_TD(raiz, chave);
+   }
+  return *raiz;
 }
 
 S_TREE * inserir(S_TREE **raiz, int chave)
@@ -94,18 +179,18 @@ S_TREE * inserir(S_TREE **raiz, int chave)
    {
       *raiz = criar_no(chave);
       return *raiz;
-   } 
-   
+   }
+
    //realiza splay no nó/chave dados
-   splay_BU(raiz, chave);
+   splay_TD(raiz, chave);
 
    //verifica se a chave que esta sendo inserida
    //já está na arvore, retorna-se a raiz
    if((*raiz)->chave == chave) return *raiz;
-   
+
    //caso contrário, aloca-se espaço para um novo nó
    S_TREE * novoNo = criar_no(chave);
-   
+
    /* se a chave dada é menor que *raiz->chave
      raiz torna-se filho direito do novo no
      o filho esquerdo da antiga raiz vira filho esquerdo da nova raiz
@@ -127,9 +212,9 @@ S_TREE * inserir(S_TREE **raiz, int chave)
       novoNo->dir = (*raiz)->dir;
       (*raiz)->dir = NULL;
    }
-   
+
    *raiz = novoNo;
-   
+
    //retorna novoNo como nova raiz da árvore
    return novoNo;
 }
@@ -137,7 +222,7 @@ S_TREE * inserir(S_TREE **raiz, int chave)
 S_TREE * buscar_no(S_TREE **raiz, int chave)
 {
    //realizamos splay na chave buscada
-   splay_BU(raiz, chave);
+   splay_TD(raiz, chave);
 
    //após splay na árvore, se a chave for encontrada
    //ela vira raiz, retornamos a raiz, caso contrário
@@ -159,7 +244,7 @@ S_TREE * remover_no(S_TREE **raiz, int chave)
 
    if(!(*raiz)) return NULL;
 
-   splay_BU(raiz, chave);
+   splay_TD(raiz, chave);
 
    //se a chave não está presente na árvore
    //então, retornamos a raiz
@@ -184,7 +269,7 @@ S_TREE * remover_no(S_TREE **raiz, int chave)
          a árvore não passará a ter filhos direitos na sub-arvore direita
          e o valor maximo na sub-arvore esquerda realizará splay
          ou seja, nova raiz*/
-      splay_BU(&((*raiz)->esq), chave);
+      splay_TD(&((*raiz)->esq), chave);
       *raiz = (*raiz)->esq;
       //faça filho direito da antiga raiz
       //como filho direito da nova raiz
@@ -202,7 +287,7 @@ S_TREE * remover_no(S_TREE **raiz, int chave)
 void rotacionar_dir(S_TREE **raiz)
 {
    assert(raiz);
-   
+
    S_TREE * auxNo = *raiz;
    *raiz = (*raiz)->esq;
    auxNo->esq = (*raiz)->dir;
@@ -212,7 +297,7 @@ void rotacionar_dir(S_TREE **raiz)
 void rotacionar_esq(S_TREE **raiz)
 {
    assert(raiz);
-   
+
    S_TREE * auxNo = *raiz;
    *raiz = (*raiz)->dir;
    auxNo->dir = (*raiz)->esq;
